@@ -44,6 +44,10 @@ class BosunTestCase < Minitest::Test
     @world.app.versions = versions
   end
 
+  def given_review_submission(state, &on_cancel)
+    @world.app.review_submission = Bosun::Fakes::ReviewSubmission.new(@world.recorder, state, on_cancel: on_cancel)
+  end
+
   def given_builds(*builds)
     @world.builds = builds
   end

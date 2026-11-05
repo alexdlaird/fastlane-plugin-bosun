@@ -70,7 +70,8 @@ module Bosun
     end
 
     class AppStoreVersion
-      attr_reader :version_string, :app_store_state, :app_version_state, :review_detail
+      attr_reader :version_string, :review_detail
+      attr_accessor :app_store_state, :app_version_state
 
       def initialize(version_string, app_store_state: nil, app_version_state: nil, review_detail: nil)
         @version_string = version_string
@@ -86,10 +87,30 @@ module Bosun
       end
     end
 
-    # A Spaceship::ConnectAPI::App with the App Store versions and edit version a scenario sets up.
+    # A Spaceship::ConnectAPI::ReviewSubmission: cancelling runs the scenario's on_cancel, which plays App Store
+    # Connect's side (withdrawing the versions, or not).
+    class ReviewSubmission
+      attr_accessor :state
+
+      def initialize(recorder, state, on_cancel: nil)
+        @recorder = recorder
+        @state = state
+        @on_cancel = on_cancel
+      end
+
+      def cancel_submission
+        @recorder.record(:spaceship, :cancel_submission, { state: @state })
+        @state = "CANCELING"
+        @on_cancel&.call(self)
+      end
+    end
+
+    # A Spaceship::ConnectAPI::App with the App Store versions, edit version and review submission a scenario sets up.
     class App
+      IN_PROGRESS_SUBMISSION_STATES = %w[WAITING_FOR_REVIEW IN_REVIEW UNRESOLVED_ISSUES].freeze
+
       attr_reader :id
-      attr_accessor :versions, :edit_version
+      attr_accessor :versions, :edit_version, :review_submission
 
       def initialize(recorder)
         @recorder = recorder
@@ -108,6 +129,11 @@ module Bosun
         else
           @versions
         end
+      end
+
+      def get_in_progress_review_submission(platform:)
+        @recorder.record(:spaceship, :get_in_progress_review_submission, { platform: platform })
+        @review_submission if IN_PROGRESS_SUBMISSION_STATES.include?(@review_submission&.state)
       end
 
       def get_edit_app_store_version(platform:)

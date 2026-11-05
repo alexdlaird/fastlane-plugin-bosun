@@ -14,9 +14,10 @@ module Fastlane
         push_store_assets = params[:push_store_assets]
         submit_for_review = params[:submit_for_review]
         automatic_release = params[:automatic_release]
+        replace_waiting = submit_for_review && params[:replace_waiting_for_review]
 
         # A version already submitted, in review or live can't take another submission: fail rather than half-change
-        # it.
+        # it. With replace_waiting_for_review, one still waiting for review is withdrawn and resubmitted instead.
         locked_states = %w[
           READY_FOR_REVIEW
           WAITING_FOR_REVIEW
@@ -30,14 +31,18 @@ module Fastlane
         app_identifier = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
         spaceship_app = Spaceship::ConnectAPI::App.find(app_identifier)
         existing = spaceship_app.get_app_store_versions(filter: { versionString: version }).first
-        if existing && locked_states.include?(existing.app_store_state)
+        replaceable_states = replace_waiting ? %w[WAITING_FOR_REVIEW] : []
+        if existing && locked_states.include?(existing.app_store_state) &&
+           !replaceable_states.include?(existing.app_store_state)
           UI.user_error!(
             "App Store version #{version} is in state `#{existing.app_store_state}`, so it can't be submitted " \
             "again. The TestFlight build is in; bump the version (if it shipped) or resolve the submission in App " \
             "Store Connect."
           )
         end
-        Helper::BosunHelper.refuse_while_another_version_in_flight(spaceship_app, version)
+        waiting = Helper::BosunHelper.refuse_while_another_version_in_flight(spaceship_app, version,
+                                                                             replaceable_states: replaceable_states)
+        Helper::BosunHelper.withdraw_waiting_for_review(spaceship_app, waiting) unless waiting.empty?
 
         other_action.upload_to_app_store(
           api_key: api_key,
@@ -90,7 +95,9 @@ module Fastlane
         "Refuses a version that's already submitted, in review or live, and refuses while any other version is with " \
           "App Review or awaiting release (staging then would rename that version). Then uploads the listing text " \
           "(and screenshots with push_store_assets) and either attaches the build, leaving the version staged, or " \
-          "submits it for review (separately, once fresh screenshots finish processing)."
+          "submits it for review (separately, once fresh screenshots finish processing). With " \
+          "replace_waiting_for_review, a submission still waiting for review (never one in review) is cancelled " \
+          "and replaced, losing its place in the review queue."
       end
 
       def self.available_options
@@ -117,6 +124,12 @@ module Fastlane
           FastlaneCore::ConfigItem.new(key: :automatic_release,
                                        description: "Release automatically once approved; otherwise it waits for " \
                                                     "\"Release this version\"",
+                                       type: Fastlane::Boolean,
+                                       default_value: false),
+          FastlaneCore::ConfigItem.new(key: :replace_waiting_for_review,
+                                       description: "When submitting, cancel and replace a submission still waiting " \
+                                                    "for review (it loses its place in the queue); one in review " \
+                                                    "is never touched",
                                        type: Fastlane::Boolean,
                                        default_value: false),
           FastlaneCore::ConfigItem.new(key: :listing_options,

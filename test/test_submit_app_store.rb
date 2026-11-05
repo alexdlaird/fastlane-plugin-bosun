@@ -138,6 +138,153 @@ class TestSubmitAppStore < BosunTestCase
     assert_user_error(/IN_REVIEW/) { submit(automatic_release: true, listing_options: listing) }
   end
 
+  def waiting_for_review(version_string)
+    version(version_string, app_store_state: "WAITING_FOR_REVIEW", app_version_state: "WAITING_FOR_REVIEW")
+  end
+
+  def withdraw(*versions)
+    lambda do |_submission|
+      versions.each do |withdrawn|
+        withdrawn.app_store_state = "DEVELOPER_REJECTED"
+        withdrawn.app_version_state = "DEVELOPER_REJECTED"
+      end
+    end
+  end
+
+  def test_replacing_withdraws_another_version_waiting_for_review_then_submits
+    # GIVEN
+    waiting = waiting_for_review("3.14.6")
+    given_app_store_versions(waiting)
+    given_review_submission("WAITING_FOR_REVIEW", &withdraw(waiting))
+
+    # WHEN
+    submit(submit_for_review: true, replace_waiting_for_review: true, automatic_release: true)
+
+    # THEN
+    assert_equal([[:spaceship, :cancel_submission, { state: "WAITING_FOR_REVIEW" }]],
+                 calls(:spaceship, :cancel_submission))
+    assert_equal(1, uploads.size)
+    assert_equal(true, uploads.first[:submit_for_review])
+    names = @world.recorder.calls.map { |_, name, _| name }
+    assert_operator(names.index(:cancel_submission), :<, names.index(:upload_to_app_store),
+                    "the waiting version is withdrawn before the listing changes")
+    assert_empty(calls(:sleep), "no wait once App Store Connect has withdrawn it")
+  end
+
+  def test_replacing_resubmits_the_same_version_waiting_for_review
+    # GIVEN
+    waiting = waiting_for_review("3.15.1")
+    given_app_store_versions(waiting)
+    given_review_submission("WAITING_FOR_REVIEW", &withdraw(waiting))
+
+    # WHEN
+    submit(submit_for_review: true, replace_waiting_for_review: true, automatic_release: true)
+
+    # THEN
+    assert_equal(1, calls(:spaceship, :cancel_submission).size)
+    assert_equal(1, uploads.size)
+  end
+
+  def test_replacing_waits_until_app_store_connect_withdraws_the_version
+    # GIVEN
+    waiting = waiting_for_review("3.14.6")
+    given_app_store_versions(waiting)
+    polls_left = nil
+    given_review_submission("WAITING_FOR_REVIEW") { polls_left = 2 }
+    waiting.define_singleton_method(:app_version_state) do
+      next "WAITING_FOR_REVIEW" if polls_left.nil?
+
+      polls_left -= 1
+      polls_left.negative? ? "DEVELOPER_REJECTED" : "WAITING_FOR_REVIEW"
+    end
+
+    # WHEN
+    submit(submit_for_review: true, replace_waiting_for_review: true, automatic_release: true)
+
+    # THEN
+    assert_equal([15, 15], calls(:sleep).map { |_, seconds| seconds })
+    assert_equal(1, uploads.size)
+  end
+
+  def test_replacing_fails_when_the_version_is_never_withdrawn
+    # GIVEN
+    given_app_store_versions(waiting_for_review("3.14.6"))
+    given_review_submission("WAITING_FOR_REVIEW")
+
+    # WHEN / THEN
+    assert_user_error(/still waiting for review after cancelling/) do
+      submit(submit_for_review: true, replace_waiting_for_review: true, automatic_release: true)
+    end
+    assert_equal(20, calls(:sleep).size)
+    assert_empty(uploads)
+  end
+
+  def test_replacing_leaves_a_submission_apple_started_reviewing
+    # GIVEN
+    given_app_store_versions(waiting_for_review("3.14.6"))
+    given_review_submission("IN_REVIEW")
+
+    # WHEN / THEN
+    assert_user_error(/now `IN_REVIEW`, so it wasn't cancelled/) do
+      submit(submit_for_review: true, replace_waiting_for_review: true, automatic_release: true)
+    end
+    assert_empty(calls(:spaceship, :cancel_submission))
+    assert_empty(uploads)
+  end
+
+  def test_replacing_never_withdraws_a_version_past_waiting_for_review
+    %w[READY_FOR_REVIEW IN_REVIEW WAITING_FOR_EXPORT_COMPLIANCE ACCEPTED PENDING_APPLE_RELEASE
+       PENDING_DEVELOPER_RELEASE PROCESSING_FOR_DISTRIBUTION].each do |state|
+      # GIVEN
+      setup
+      given_app_store_versions(version("3.14.6", app_version_state: state))
+      given_review_submission("IN_REVIEW")
+
+      # WHEN / THEN
+      assert_user_error(/3\.14\.6 \(`#{state}`\)/) do
+        submit(submit_for_review: true, replace_waiting_for_review: true, automatic_release: true)
+      end
+      assert_empty(calls(:spaceship, :cancel_submission), state)
+      teardown
+    end
+  end
+
+  def test_replacing_never_withdraws_the_same_version_in_review
+    # GIVEN
+    given_app_store_versions(version("3.15.1", app_store_state: "IN_REVIEW", app_version_state: "IN_REVIEW"))
+    given_review_submission("IN_REVIEW")
+
+    # WHEN / THEN
+    assert_user_error(/in state `IN_REVIEW`/) do
+      submit(submit_for_review: true, replace_waiting_for_review: true, automatic_release: true)
+    end
+    assert_empty(calls(:spaceship, :cancel_submission))
+  end
+
+  def test_staging_never_withdraws_a_version_waiting_for_review
+    # GIVEN
+    given_app_store_versions(waiting_for_review("3.14.6"))
+    given_review_submission("WAITING_FOR_REVIEW")
+
+    # WHEN / THEN
+    assert_user_error(/3\.14\.6 \(`WAITING_FOR_REVIEW`\)/) do
+      submit(submit_for_review: false, replace_waiting_for_review: true, automatic_release: true)
+    end
+    assert_empty(calls(:spaceship, :cancel_submission))
+  end
+
+  def test_replacing_with_nothing_waiting_cancels_nothing
+    # GIVEN
+    given_review_submission("UNRESOLVED_ISSUES")
+
+    # WHEN
+    submit(submit_for_review: true, replace_waiting_for_review: true, automatic_release: true)
+
+    # THEN
+    assert_empty(calls(:spaceship, :get_in_progress_review_submission))
+    assert_equal(1, uploads.size)
+  end
+
   def test_staging_without_the_build_listed_fails
     # WHEN / THEN
     assert_user_error(/not found in App Store Connect/) { submit(automatic_release: true) }

@@ -42,7 +42,9 @@ module Fastlane
         false
       end
 
-      def refuse_while_another_version_in_flight(spaceship_app, version)
+      # Refuses while any version is with App Review or awaiting release, except in replaceable_states; returns the
+      # versions it let through, for the caller to withdraw.
+      def refuse_while_another_version_in_flight(spaceship_app, version, replaceable_states: [])
         in_flight = spaceship_app.get_app_store_versions(
           filter: {
             appVersionState: %w[
@@ -58,9 +60,12 @@ module Fastlane
             platform: "IOS"
           }
         )
-        return if in_flight.empty?
+        blocking = in_flight.reject do |app_store_version|
+          replaceable_states.include?(app_store_version.app_version_state)
+        end
+        return in_flight if blocking.empty?
 
-        pending = in_flight.map do |app_store_version|
+        pending = blocking.map do |app_store_version|
           "#{app_store_version.version_string} (`#{app_store_version.app_version_state}`)"
         end.join(", ")
         UI.user_error!(
@@ -68,6 +73,38 @@ module Fastlane
           "staged. App Store Connect holds one version in flight, and staging now would rename that version to " \
           "#{version} and change its listing. Let it finish (or cancel it in App Store Connect), then re-run."
         )
+      end
+
+      # Cancels the review submission holding versions still waiting for review, then waits until App Store Connect
+      # has released them for editing. The submission is re-read first: once Apple starts reviewing it, it's left
+      # alone.
+      def withdraw_waiting_for_review(spaceship_app, waiting, attempts: 20, interval: 15)
+        names = waiting.map(&:version_string).join(", ")
+        submission = spaceship_app.get_in_progress_review_submission(platform: "IOS")
+        unless submission&.state == "WAITING_FOR_REVIEW"
+          UI.user_error!(
+            "App Store version #{names} was waiting for review, but its review submission is now " \
+            "`#{submission&.state || 'not found'}`, so it wasn't cancelled. Check App Store Connect, then re-run."
+          )
+        end
+
+        submission.cancel_submission
+        UI.message("Requested cancellation of the review submission for App Store version #{names}")
+        attempts.times do |attempt|
+          return UI.success("Withdrew App Store version #{names} from review") if withdrawn?(spaceship_app)
+
+          UI.message("Waiting for App Store Connect to withdraw #{names} (#{attempt + 1}/#{attempts}); " \
+                     "checking again in #{interval}s")
+          sleep(interval)
+        end
+        UI.user_error!("App Store version #{names} is still waiting for review after cancelling its submission. " \
+                       "Check App Store Connect, then re-run.")
+      end
+
+      def withdrawn?(spaceship_app)
+        spaceship_app.get_in_progress_review_submission(platform: "IOS").nil? &&
+          spaceship_app.get_app_store_versions(filter: { appVersionState: "WAITING_FOR_REVIEW",
+                                                         platform: "IOS" }).empty?
       end
 
       def attach_build(spaceship_app, version, build_number)
