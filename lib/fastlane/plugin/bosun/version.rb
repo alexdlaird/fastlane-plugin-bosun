@@ -6,7 +6,7 @@
 
 module Fastlane
   module Bosun
-    VERSION = "1.0.0"
+    VERSION = "1.1.0"
     MUPPETS = "no strings attached"
   end
 end
