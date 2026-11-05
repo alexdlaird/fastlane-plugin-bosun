@@ -2,8 +2,6 @@ name: Release
 
 run-name: Release ${{ inputs.bump_type }}
 
-# Bumps the version from the last release tag, dates the CHANGELOG's [Unreleased] entries under it, and commits that to
-# main as the release, then publishes the GitHub Release and moves the major tag (`v1`) apps pin in their Pluginfile.
 on:
   workflow_dispatch:
     inputs:
@@ -18,7 +16,7 @@ on:
           - major
 
 permissions:
-  contents: write
+  contents: read
   actions: write
 
 concurrency:
@@ -26,152 +24,13 @@ concurrency:
 
 jobs:
   release:
-    name: Release
-    runs-on: ubuntu-latest
-
-    env:
-      VERSION_FILE: lib/fastlane/plugin/bosun/version.rb
-      VERSION_PATTERN: 's/VERSION = ".*"/VERSION = "${VERSION}"/'
-
-    steps:
-      - name: Generate GitHub App token
-        id: app-token
-        uses: actions/create-github-app-token@v3
-        with:
-          client-id: ${{ secrets.RELEASE_BOT_APP_ID }}
-          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
-
-      - uses: actions/checkout@v6
-        with:
-          token: ${{ steps.app-token.outputs.token }}
-          ref: main
-          fetch-depth: 0
-
-      - name: Record the tested commit
-        id: tested
-        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-
-      - name: Wait for main's Build to pass
-        uses: alexdlaird/shipshape/wait-for-ci@v1
-        with:
-          token: ${{ github.token }}
-          sha: ${{ steps.tested.outputs.sha }}
-          branch: main
-          repo-slug: ${{ github.repository }}
-          workflow: build.yml
-          timeout-minutes: 30
-
-      - name: Read the current version
-        id: current
-        uses: alexdlaird/shipshape/read-version@v1
-        with:
-          version-file: ${{ env.VERSION_FILE }}
-          version-pattern: ${{ env.VERSION_PATTERN }}
-
-      - name: Compute the release version
-        id: next
-        uses: alexdlaird/shipshape/next-version@v1
-        with:
-          bump-type: ${{ inputs.bump_type }}
-          current: ${{ steps.current.outputs.version }}
-          current-file-version: ${{ steps.current.outputs.file-version }}
-
-      - name: Pre-validate the version is unreleased
-        uses: alexdlaird/shipshape/check-unreleased@v1
-        with:
-          version: ${{ steps.next.outputs.version }}
-
-      - name: Date the CHANGELOG's entries under the version
-        id: notes
-        uses: alexdlaird/shipshape/prepare-release@v1
-        with:
-          version: ${{ steps.next.outputs.version }}
-          repo-slug: ${{ github.repository }}
-
-      - name: Write the version
-        env:
-          NEW_VERSION: ${{ steps.next.outputs.version }}
-        run: |
-          sed -i "s/VERSION = \".*\"/VERSION = \"${NEW_VERSION}\"/" "$VERSION_FILE"
-          sed -i -E "s/^( +fastlane-plugin-bosun \()[^)]+\)$/\1${NEW_VERSION})/" Gemfile.lock
-
-      - name: Point SECURITY.md at the version
-        uses: alexdlaird/shipshape/security-versions@v1
-        with:
-          version: ${{ steps.next.outputs.version }}
-
-      - name: Verify the release changes only its version files
-        run: |
-          CHANGED=$(git status --porcelain --untracked-files=all | cut -c4-)
-          UNEXPECTED=$(grep -vxE "${VERSION_FILE}|Gemfile\.lock|CHANGELOG\.md|SECURITY\.md" <<< "$CHANGED" || true)
-          if [ -n "$UNEXPECTED" ]; then
-            echo "::error::The release changed more than its version files: ${UNEXPECTED//$'\n'/, }"
-            exit 1
-          fi
-          git diff
-
-      - name: Commit the release to main (signed)
-        id: push
-        uses: IAreKyleW00t/verified-bot-commit@v2.3.5
-        with:
-          token: ${{ steps.app-token.outputs.token }}
-          repository: ${{ github.repository }}
-          ref: main
-          files: '**'
-          if-no-commit: error
-          message: |
-            Release ${{ steps.next.outputs.version }}
-
-            ${{ steps.notes.outputs.release-notes }}
-
-      - name: Verify the release commit is the tested commit plus its version files
-        env:
-          COMMIT: ${{ steps.push.outputs.commit }}
-          TESTED_SHA: ${{ steps.tested.outputs.sha }}
-        run: |
-          git fetch -q origin main
-          PARENT=$(git rev-parse "${COMMIT}^")
-          if [ "$PARENT" != "$TESTED_SHA" ]; then
-            echo "::error::main moved during release: ${COMMIT:0:7} landed on ${PARENT:0:7}, not the tested ${TESTED_SHA:0:7}. Revert it, then re-run."
-            exit 1
-          fi
-          UNEXPECTED=$(git diff --name-only "$TESTED_SHA" "$COMMIT" | grep -vxE "${VERSION_FILE}|Gemfile\.lock|CHANGELOG\.md|SECURITY\.md" || true)
-          if [ -n "$UNEXPECTED" ]; then
-            echo "::error::${COMMIT:0:7} changed more than its version files: ${UNEXPECTED//$'\n'/, }. Revert it, then re-run."
-            exit 1
-          fi
-
-      - name: Create GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.next.outputs.version }}
-          SHA: ${{ steps.push.outputs.commit }}
-          RELEASE_NOTES: ${{ steps.notes.outputs.release-notes }}
-        run: |
-          gh release create "$VERSION" \
-            --target "$SHA" \
-            --title "$VERSION" \
-            --notes "$RELEASE_NOTES"
-
-      # Apps pin the major tag, so it moves to every release of that major
-      - name: Move the major version tag
-        env:
-          VERSION: ${{ steps.next.outputs.version }}
-          SHA: ${{ steps.push.outputs.commit }}
-        run: |
-          MAJOR_TAG="v${VERSION%%.*}"
-          git tag -f "$MAJOR_TAG" "$SHA"
-          git push -f origin "refs/tags/${MAJOR_TAG}"
-          echo "${MAJOR_TAG} -> ${SHA:0:7}"
-
-      - name: Add release to job summary
-        env:
-          VERSION: ${{ steps.next.outputs.version }}
-          SHA: ${{ steps.push.outputs.commit }}
-          REPO_SLUG: ${{ github.repository }}
-        run: |
-          {
-            echo "## Release \`${VERSION}\`"
-            echo ""
-            echo "Release commit: [\`${SHA:0:7}\`](https://github.com/${REPO_SLUG}/commit/${SHA})"
-          } >> "$GITHUB_STEP_SUMMARY"
+    uses: alexdlaird/.github/.github/workflows/release-main.yml@main
+    with:
+      bump_type: ${{ inputs.bump_type }}
+      version_file: lib/fastlane/plugin/bosun/version.rb
+      version_pattern: 's/VERSION = ".*"/VERSION = "${VERSION}"/'
+      release_files: Gemfile.lock
+      move_major_tag: true
+    secrets:
+      bot_app_id: ${{ secrets.RELEASE_BOT_APP_ID }}
+      bot_private_key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}

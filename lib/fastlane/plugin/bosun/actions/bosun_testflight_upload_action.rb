@@ -21,15 +21,8 @@ module Fastlane
             distribute_external: false
           )
         rescue StandardError => e
-          # altool retries transient network blips (e.g. `WILL RETRY PART N` after a TLS reset) internally and exits
-          # successfully, but fastlane's output parser matches the `Failed with error:` substring in that retry
-          # chatter and raises anyway. Before trusting the failure, re-query App Store Connect for the build just
-          # uploaded: if Apple already has it, the upload genuinely succeeded and the raise is a false positive.
-          #
-          # A BuildWatcher processing timeout is a different failure: the binary was received, but Apple hadn't
-          # finished processing it within the wait window, so it must not be swallowed. And App Store Connect
-          # refusing the binary outright (an older or closed version, a build number it already has) has no retry
-          # chatter, so the build is never looked for to excuse it.
+          # fastlane raises on altool's retry chatter even when the upload succeeded, so a raise is checked against App
+          # Store Connect before it's trusted. A processing timeout or an outright rejection is never excused.
           raise e if params[:reraise_build_watcher] && e.message.include?("BuildWatcher exceeded")
           raise e if params[:rejection_messages].any? { |rejection| e.message.include?(rejection) }
 
