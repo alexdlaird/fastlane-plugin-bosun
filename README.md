@@ -29,8 +29,11 @@ it.
 
 ```ruby
 lane :deploy_testflight do |options|
-  api_key = app_store_connect_api_key(key_id: ENV["ASC_KEY_ID"], issuer_id: ENV["ASC_ISSUER_ID"],
-                                      key_filepath: ENV["ASC_KEY_PATH"])
+  api_key = app_store_connect_api_key(
+    key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+    issuer_id: ENV["APP_STORE_CONNECT_API_ISSUER_ID"],
+    key_filepath: File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV['APP_STORE_CONNECT_API_KEY_ID']}.p8")
+  )
   build_number = bosun_next_build_number(api_key: api_key, version: options[:version], scope_to_version: true)
 
   # ... build the IPA with build_number ...
@@ -88,7 +91,10 @@ reviews the new release instead.
 
 ## Documentation
 
-Each action's options are documented in its source and by `fastlane action <name>`.
+Each action's options are documented in its source and by `fastlane action <name>`. For complete lanes built from them,
+see the [iOS](https://github.com/HeliumEdu/frontend/blob/main/ios/fastlane/Fastfile) and
+[Android](https://github.com/HeliumEdu/frontend/blob/main/android/fastlane/Fastfile) Fastfiles of
+[Helium](https://github.com/HeliumEdu/frontend), which ship with them.
 
 | Action | Does |
 |---|---|
