@@ -1,0 +1,85 @@
+name: 🐛 Bug Report
+description: Found a bug? Help us squash it.
+labels: ["bug"]
+
+body:
+
+- type: markdown
+  attributes:
+    value: |
+      Consider [supporting the project](https://github.com/sponsors/alexdlaird) ❤ to have your request prioritized.
+
+- type: checkboxes
+  id: ack
+  attributes:
+    label: Acknowledgements
+    options:
+    - label: I have written a descriptive issue title
+      required: true
+    - label: I have read the action's options in [the README](https://github.com/alexdlaird/fastlane-plugin-bosun#readme)
+      required: true
+    - label: I have searched [Issues](issues?q=is%3Aissue) to see if the bug has already been reported
+      required: true
+
+- type: input
+  id: action
+  attributes:
+    label: Action
+    placeholder: bosun_submit_app_store
+  validations:
+    required: true
+
+- type: input
+  id: os
+  attributes:
+    label: Operating System
+    placeholder: macOS 15.5
+  validations:
+    required: true
+
+- type: input
+  id: ruby-version
+  attributes:
+    label: Ruby Version
+    placeholder: 3.3.11
+  validations:
+    required: true
+
+- type: input
+  id: fastlane-version
+  attributes:
+    label: fastlane Version
+    placeholder: 2.236.1
+  validations:
+    required: true
+
+- type: input
+  id: bosun-version
+  attributes:
+    label: bosun Version
+    placeholder: 1.0.0
+  validations:
+    required: true
+
+- type: textarea
+  id: describe-the-bug
+  attributes:
+    label: Describe the Bug
+    description: A clear and concise description of what the bug is, including the error the lane logged.
+  validations:
+    required: true
+
+- type: textarea
+  id: steps-to-reproduce
+  attributes:
+    label: Steps to Reproduce
+    description: The lane that calls the action, with its options, and the store state that matters (e.g. a version already in review).
+    render: ruby
+  validations:
+    required: true
+
+- type: textarea
+  id: expected-behavior
+  attributes:
+    label: Expected Behavior
+    description: A brief description of what you expected to happen.

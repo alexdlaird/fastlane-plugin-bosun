@@ -1,0 +1,28 @@
+AllCops:
+  TargetRubyVersion: 3.3
+  NewCops: enable
+  SuggestExtensions: false
+  Exclude:
+    - "vendor/**/*"
+    - "parity/**/*"
+
+Layout/LineLength:
+  Max: 119
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Style/Documentation:
+  Enabled: false
+
+Metrics:
+  Enabled: false
+
+# fastlane's action API names it is_supported?.
+Naming/PredicatePrefix:
+  AllowedMethods:
+    - is_supported?
+
+# The assets-ready retry returns from inside its loop on success, as the lanes it came from do.
+Lint/NonLocalExitFromIterator:
+  Enabled: false

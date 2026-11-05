@@ -1,0 +1,44 @@
+name: Build
+
+run-name: Build ${{ github.ref_name }}
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+  issues: none
+  pull-requests: none
+
+jobs:
+  build:
+    name: Build
+
+    # Apps run their lanes on Ruby 3.3, the oldest supported
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+        ruby-version: [ "4.0" ]
+        include:
+          - os: ubuntu-24.04
+            ruby-version: "3.3"
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Ruby ${{ matrix.ruby-version }}
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby-version }}
+          bundler-cache: true
+      - name: Check
+        run: make check
+      - name: Test
+        run: make test
