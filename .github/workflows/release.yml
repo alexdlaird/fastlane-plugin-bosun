@@ -91,7 +91,9 @@ jobs:
       - name: Write the version
         env:
           NEW_VERSION: ${{ steps.next.outputs.version }}
-        run: sed -i "s/VERSION = \".*\"/VERSION = \"${NEW_VERSION}\"/" "$VERSION_FILE"
+        run: |
+          sed -i "s/VERSION = \".*\"/VERSION = \"${NEW_VERSION}\"/" "$VERSION_FILE"
+          sed -i -E "s/^( +fastlane-plugin-bosun \()[^)]+\)$/\1${NEW_VERSION})/" Gemfile.lock
 
       - name: Point SECURITY.md at the version
         uses: alexdlaird/shipshape/security-versions@v1
@@ -101,7 +103,7 @@ jobs:
       - name: Verify the release changes only its version files
         run: |
           CHANGED=$(git status --porcelain --untracked-files=all | cut -c4-)
-          UNEXPECTED=$(grep -vxE "${VERSION_FILE}|CHANGELOG\.md|SECURITY\.md" <<< "$CHANGED" || true)
+          UNEXPECTED=$(grep -vxE "${VERSION_FILE}|Gemfile\.lock|CHANGELOG\.md|SECURITY\.md" <<< "$CHANGED" || true)
           if [ -n "$UNEXPECTED" ]; then
             echo "::error::The release changed more than its version files: ${UNEXPECTED//$'\n'/, }"
             exit 1
@@ -133,7 +135,7 @@ jobs:
             echo "::error::main moved during release: ${COMMIT:0:7} landed on ${PARENT:0:7}, not the tested ${TESTED_SHA:0:7}. Revert it, then re-run."
             exit 1
           fi
-          UNEXPECTED=$(git diff --name-only "$TESTED_SHA" "$COMMIT" | grep -vxE "${VERSION_FILE}|CHANGELOG\.md|SECURITY\.md" || true)
+          UNEXPECTED=$(git diff --name-only "$TESTED_SHA" "$COMMIT" | grep -vxE "${VERSION_FILE}|Gemfile\.lock|CHANGELOG\.md|SECURITY\.md" || true)
           if [ -n "$UNEXPECTED" ]; then
             echo "::error::${COMMIT:0:7} changed more than its version files: ${UNEXPECTED//$'\n'/, }. Revert it, then re-run."
             exit 1
