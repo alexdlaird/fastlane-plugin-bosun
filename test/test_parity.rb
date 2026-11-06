@@ -7,11 +7,6 @@
 require_relative "testcase"
 require_relative "support/fastfile_sandbox"
 
-# Moving an app onto bosun must not change what its lanes do. For each app in BOSUN_PARITY_DIR
-# (<app>/<platform>/reference.Fastfile, the app's Fastfile today, and candidate.Fastfile, the same lanes on bosun),
-# every scenario runs against both, and everything they do to the outside world must match call for call: fastlane
-# actions and their arguments, App Store Connect and Play calls, sleeps, files written, the log lines CI parses, and
-# the result or error. Skipped when BOSUN_PARITY_DIR isn't set (the apps' Fastfiles aren't part of this repo).
 class TestParity < BosunTestCase
   PARITY_DIR = ENV.fetch("BOSUN_PARITY_DIR", nil)
   REJECTIONS = ["This bundle is invalid", "is closed for new build submissions", "bundle version must be higher",
@@ -117,7 +112,6 @@ class TestParity < BosunTestCase
     world&.cleanup
   end
 
-  # Keyword arguments are compared regardless of order, and the two runs' temporary project folders as one.
   def normalize(value, world)
     case value
     when Hash then value.map { |key, item| [key, normalize(item, world)] }.sort_by { |key, _| key.to_s }

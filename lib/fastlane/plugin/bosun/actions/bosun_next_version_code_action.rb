@@ -22,7 +22,7 @@ module Fastlane
       end
 
       def self.description
-        "The next Play version code, taken across every track"
+        "Get the next Play version code, taken across every track"
       end
 
       def self.details

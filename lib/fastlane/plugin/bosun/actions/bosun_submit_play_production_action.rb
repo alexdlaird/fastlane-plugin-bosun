@@ -43,10 +43,10 @@ module Fastlane
         )
         if submit_for_review
           UI.success("Submitted #{version} (#{version_code}) to Production for review; once approved Play holds it " \
-                     "for a manual Publish.")
+                     "for a manual Publish")
         else
           UI.success("Staged #{version} (#{version_code}) on Production as a draft; send it for review in Play " \
-                     "Console.")
+                     "Console")
         end
       end
 
@@ -55,11 +55,11 @@ module Fastlane
       end
 
       def self.details
-        "Stamps changelogs/<version_code>.txt from en-US/default_release_notes.txt, puts the version code back on " \
-          "the Internal track if a newer build replaced it there, and promotes it to Production with the listing " \
-          "text (and images and screenshots with push_store_assets). Submitting refuses while a Production release " \
-          "is in review or approved but unpublished, unless replace_in_review: committing then makes Play cancel " \
-          "that review and review the new release instead."
+        "Stamps `changelogs/<version_code>.txt` from `en-US/default_release_notes.txt`, puts the version code " \
+          "back on the Internal track if a newer build replaced it there, and promotes it to Production with the " \
+          "listing text (and images and screenshots with `push_store_assets`). Submitting refuses while a " \
+          "Production release is in review or approved but unpublished, unless `replace_in_review`: committing " \
+          "then makes Play cancel that review and review the new release instead."
       end
 
       def self.available_options
@@ -72,7 +72,7 @@ module Fastlane
                                        skip_type_validation: true),
           FastlaneCore::ConfigItem.new(key: :metadata_dir,
                                        description: "Absolute path to the Play metadata folder " \
-                                                    "(fastlane/metadata/android)",
+                                                    "(`fastlane/metadata/android`)",
                                        type: String),
           FastlaneCore::ConfigItem.new(key: :submit_for_review,
                                        description: "Send the release for review; otherwise it's a Production draft",

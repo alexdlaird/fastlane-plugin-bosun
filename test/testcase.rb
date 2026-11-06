@@ -21,7 +21,6 @@ class BosunTestCase < Minitest::Test
     @world.cleanup
   end
 
-  # Runs an action the way fastlane does: from the platform's project folder, with other_action calling through.
   def run_action(action, platform, **values)
     config = FastlaneCore::Configuration.create(action.available_options, values)
     proxy = @world.proxy

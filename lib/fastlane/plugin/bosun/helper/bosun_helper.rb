@@ -42,7 +42,7 @@ module Fastlane
         false
       end
 
-      # Refuses while any version is with App Review or awaiting release, except in replaceable_states; returns the
+      # Refuse while any version is with App Review or awaiting release, except in replaceable_states; return the
       # versions it let through, for the caller to withdraw.
       def refuse_while_another_version_in_flight(spaceship_app, version, replaceable_states: [])
         in_flight = spaceship_app.get_app_store_versions(
@@ -75,7 +75,7 @@ module Fastlane
         )
       end
 
-      # Cancels the review submission holding versions still waiting for review, then waits until App Store Connect
+      # Cancel the review submission holding versions still waiting for review, then wait until App Store Connect
       # has released them for editing. The submission is re-read first: once Apple starts reviewing it, it's left
       # alone.
       def withdraw_waiting_for_review(spaceship_app, waiting, attempts: 20, interval: 15)
@@ -115,12 +115,12 @@ module Fastlane
 
         build = Spaceship::ConnectAPI::Build.all(app_id: spaceship_app.id, version: version,
                                                  build_number: build_number, limit: 1).first
-        UI.user_error!("TestFlight build #{version} (#{build_number}) not found in App Store Connect.") unless build
+        UI.user_error!("TestFlight build #{version} (#{build_number}) not found in App Store Connect") unless build
 
         edit_version.select_build(build_id: build.id)
       end
 
-      # Submits the staged version, retrying while App Store Connect still reports freshly uploaded screenshots as
+      # Submit the staged version, retrying while App Store Connect still reports freshly uploaded screenshots as
       # processing (deliver's own wait watches each asset, which finishes before the version is submittable).
       def submit_for_review_when_assets_ready(other_action, api_key:, version:, build_number:, automatic_release:,
                                               attempts: 10, delay_seconds: 30)
@@ -142,12 +142,12 @@ module Fastlane
           raise unless e.message.include?("still in progress") && attempt < attempts - 1
 
           UI.important("App Store Connect is still processing screenshots (attempt #{attempt + 1}/#{attempts}); " \
-                       "retrying in #{delay_seconds}s.")
+                       "retrying in #{delay_seconds}s")
           sleep(delay_seconds)
         end
       end
 
-      # Puts a version code Play already holds back on the Internal track (as a draft) when a newer build has
+      # Put a version code Play already holds back on the Internal track (as a draft) when a newer build has
       # replaced it there, so promoting it works for a re-run as well as a fresh release.
       def ensure_staged_on_internal(other_action, version:, version_code:)
         version_code = version_code.to_i

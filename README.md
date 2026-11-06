@@ -100,10 +100,10 @@ see the [iOS](https://github.com/HeliumEdu/frontend/blob/main/ios/fastlane/Fastf
 
 | Action | Does |
 |---|---|
-| [`bosun_next_build_number`](https://github.com/alexdlaird/fastlane-plugin-bosun/blob/main/lib/fastlane/plugin/bosun/actions/bosun_next_build_number_action.rb) | The next TestFlight build number, for a version or across versions |
+| [`bosun_next_build_number`](https://github.com/alexdlaird/fastlane-plugin-bosun/blob/main/lib/fastlane/plugin/bosun/actions/bosun_next_build_number_action.rb) | Get the next TestFlight build number, for a version or across versions |
 | [`bosun_testflight_upload`](https://github.com/alexdlaird/fastlane-plugin-bosun/blob/main/lib/fastlane/plugin/bosun/actions/bosun_testflight_upload_action.rb) | Upload an IPA to TestFlight, telling a real failure from a false positive |
 | [`bosun_submit_app_store`](https://github.com/alexdlaird/fastlane-plugin-bosun/blob/main/lib/fastlane/plugin/bosun/actions/bosun_submit_app_store_action.rb) | Stage an App Store version with its build, or submit it for review |
-| [`bosun_next_version_code`](https://github.com/alexdlaird/fastlane-plugin-bosun/blob/main/lib/fastlane/plugin/bosun/actions/bosun_next_version_code_action.rb) | The next Play version code, across every track |
+| [`bosun_next_version_code`](https://github.com/alexdlaird/fastlane-plugin-bosun/blob/main/lib/fastlane/plugin/bosun/actions/bosun_next_version_code_action.rb) | Get the next Play version code, across every track |
 | [`bosun_upload_to_play_internal`](https://github.com/alexdlaird/fastlane-plugin-bosun/blob/main/lib/fastlane/plugin/bosun/actions/bosun_upload_to_play_internal_action.rb) | Upload an AAB to the Internal track |
 | [`bosun_submit_play_production`](https://github.com/alexdlaird/fastlane-plugin-bosun/blob/main/lib/fastlane/plugin/bosun/actions/bosun_submit_play_production_action.rb) | Promote an Internal build to Production, as a draft or submitted for review |
 

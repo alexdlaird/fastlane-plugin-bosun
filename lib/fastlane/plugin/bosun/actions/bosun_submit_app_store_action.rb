@@ -65,7 +65,7 @@ module Fastlane
           # deliver attaches the build only when it submits.
           Helper::BosunHelper.attach_build(spaceship_app, version, build_number)
           UI.success("Staged App Store version #{version} (#{build_number}); submit it for review in App Store " \
-                     "Connect.")
+                     "Connect")
           return
         end
 
@@ -76,7 +76,7 @@ module Fastlane
         end
         once_approved = automatic_release ? "it releases automatically" : "it waits for a manual release"
         UI.success("Submitted App Store version #{version} (#{build_number}) for review; once approved " \
-                   "#{once_approved}.")
+                   "#{once_approved}")
       end
 
       # The listing options, built now if the lane passed a lambda, so they're read after the checks above. A lambda
@@ -94,16 +94,16 @@ module Fastlane
       def self.details
         "Refuses a version that's already submitted, in review or live, and refuses while any other version is with " \
           "App Review or awaiting release (staging then would rename that version). Then uploads the listing text " \
-          "(and screenshots with push_store_assets) and either attaches the build, leaving the version staged, or " \
+          "(and screenshots with `push_store_assets`) and either attaches the build, leaving the version staged, or " \
           "submits it for review (separately, once fresh screenshots finish processing). With " \
-          "replace_waiting_for_review, a submission still waiting for review (never one in review) is cancelled " \
+          "`replace_waiting_for_review`, a submission still waiting for review (never one in review) is cancelled " \
           "and replaced, losing its place in the review queue."
       end
 
       def self.available_options
         [
           FastlaneCore::ConfigItem.new(key: :api_key,
-                                       description: "The App Store Connect API key, as app_store_connect_api_key " \
+                                       description: "The App Store Connect API key, as `app_store_connect_api_key` " \
                                                     "returns it",
                                        type: Hash,
                                        sensitive: true),
@@ -133,8 +133,8 @@ module Fastlane
                                        type: Fastlane::Boolean,
                                        default_value: false),
           FastlaneCore::ConfigItem.new(key: :listing_options,
-                                       description: "Further upload_to_app_store options for the listing (URLs, " \
-                                                    "app_review_information, ...), or a lambda returning them, " \
+                                       description: "Further `upload_to_app_store` options for the listing (URLs, " \
+                                                    "`app_review_information`, ...), or a lambda returning them, " \
                                                     "called only once the version passes the checks",
                                        skip_type_validation: true,
                                        default_value: {})

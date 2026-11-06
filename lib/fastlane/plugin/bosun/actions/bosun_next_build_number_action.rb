@@ -30,7 +30,7 @@ module Fastlane
       end
 
       def self.description
-        "The next TestFlight build number: App Store Connect's latest plus one"
+        "Get the next TestFlight build number: App Store Connect's latest plus one"
       end
 
       def self.details
@@ -42,13 +42,13 @@ module Fastlane
       def self.available_options
         [
           FastlaneCore::ConfigItem.new(key: :api_key,
-                                       description: "The App Store Connect API key, as app_store_connect_api_key " \
+                                       description: "The App Store Connect API key, as `app_store_connect_api_key` " \
                                                     "returns it",
                                        type: Hash,
                                        sensitive: true),
           FastlaneCore::ConfigItem.new(key: :version,
                                        description: "The version (named in the log line, and the lookup's scope " \
-                                                    "with scope_to_version)",
+                                                    "with `scope_to_version`)",
                                        type: String,
                                        optional: true),
           FastlaneCore::ConfigItem.new(key: :scope_to_version,

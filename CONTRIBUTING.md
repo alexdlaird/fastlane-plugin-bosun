@@ -13,6 +13,13 @@ If you would like to contribute to the code, the process is pretty simple:
 6. Submit a [pull request](https://help.github.com/en/articles/creating-a-pull-request-from-a-fork) to get the changes
    merged.
 
+Moving an app onto `bosun` must not change what its lanes do, so `make test` also runs a parity suite when
+`BOSUN_PARITY_DIR` is set. For each app in that folder (`<app>/<platform>/reference.Fastfile`, the app's Fastfile
+before `bosun`, and `candidate.Fastfile`, the same lanes on `bosun`), every scenario runs against both, and everything
+they do to the outside world must match call for call: `fastlane` actions and their arguments, App Store Connect and
+Play calls, sleeps, files written, the log lines CI parses, and the result or error. The apps' Fastfiles aren't part of
+this repo, so the suite is skipped without it.
+
 Also be sure to review the [Code of Conduct](https://github.com/alexdlaird/fastlane-plugin-bosun?tab=coc-ov-file#contributor-covenant-code-of-conduct)
 before submitting issues or pull requests.
 

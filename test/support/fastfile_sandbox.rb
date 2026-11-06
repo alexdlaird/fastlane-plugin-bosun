@@ -5,8 +5,6 @@
 # SPDX-License-Identifier: MIT
 
 module Bosun
-  # Runs a Fastfile's lanes inside a World the way fastlane does: lane bodies from the fastlane folder, actions from
-  # the project folder. bosun actions run for real; every other action is recorded by the World.
   class FastfileSandbox
     UI = Fastlane::UI
 

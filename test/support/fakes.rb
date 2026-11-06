@@ -9,8 +9,6 @@ module Bosun
     Release = Struct.new(:release_name, :release_lifecycle_state)
     ReleaseList = Struct.new(:releases)
 
-    # Records everything the code under test does to the outside world (fastlane actions, App Store Connect, Play,
-    # log lines, sleeps), in order, so two implementations can be compared call for call.
     class Recorder
       attr_reader :calls, :responses
 
@@ -35,7 +33,6 @@ module Bosun
       end
     end
 
-    # Stands in for other_action (in an action) or the fastlane runner (in a Fastfile): every action call is recorded.
     class ActionProxy < BasicObject
       def initialize(recorder)
         @recorder = recorder
@@ -87,8 +84,6 @@ module Bosun
       end
     end
 
-    # A Spaceship::ConnectAPI::ReviewSubmission: cancelling runs the scenario's on_cancel, which plays App Store
-    # Connect's side (withdrawing the versions, or not).
     class ReviewSubmission
       attr_accessor :state
 
@@ -105,7 +100,6 @@ module Bosun
       end
     end
 
-    # A Spaceship::ConnectAPI::App with the App Store versions, edit version and review submission a scenario sets up.
     class App
       IN_PROGRESS_SUBMISSION_STATES = %w[WAITING_FOR_REVIEW IN_REVIEW UNRESOLVED_ISSUES].freeze
 
@@ -142,7 +136,6 @@ module Bosun
       end
     end
 
-    # A Supply::Client: records the edit it makes, and where it was created from (json_key_file resolves from there).
     class PlayClient
       attr_accessor :internal_track, :production_releases
 

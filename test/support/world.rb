@@ -9,9 +9,6 @@ require "tmpdir"
 require_relative "fakes"
 
 module Bosun
-  # The outside world a scenario runs against: a project folder on disk, and fakes for every fastlane action, App
-  # Store Connect, Play, the log and sleep. Both the actions and a whole Fastfile run inside it, so their effects can
-  # be compared.
   class World
     APP_IDENTIFIER = "com.example.app"
 
@@ -44,7 +41,6 @@ module Bosun
       File.write(path(relative_path), content)
     end
 
-    # Runs the block with every outside call faked.
     def enter(&)
       Stubs.with(stubs, &)
     end
@@ -79,7 +75,6 @@ module Bosun
     end
   end
 
-  # Swaps singleton methods for the length of a block, restoring the originals after.
   module Stubs
     def self.with(stubs, &)
       return yield if stubs.empty?

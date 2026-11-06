@@ -31,14 +31,14 @@ module Fastlane
             raise e unless Helper::BosunHelper.build_appears?(build_number, version)
 
             UI.important("upload_to_testflight raised (#{e.message}), but #{version} build #{build_number} is " \
-                         "present in App Store Connect — treating the upload as successful (transient altool retry " \
-                         "false positive).")
+                         "present in App Store Connect; treating the upload as successful (transient altool retry " \
+                         "false positive)")
           else
             raise e unless build_number
             raise e unless Helper::BosunHelper.build_appears?(build_number, nil)
 
             UI.important("upload_to_testflight raised (#{e.message}), but build #{build_number} is present in App " \
-                         "Store Connect — treating the upload as successful (transient altool retry false positive).")
+                         "Store Connect; treating the upload as successful (transient altool retry false positive)")
           end
         end
       end
@@ -48,16 +48,16 @@ module Fastlane
       end
 
       def self.details
-        "Uploads with upload_to_testflight and waits for processing. When the upload raises, it re-raises a " \
-          "processing timeout (reraise_build_watcher) or an outright App Store Connect rejection " \
-          "(rejection_messages), and otherwise polls App Store Connect for the build: if it's there, the upload " \
+        "Uploads with `upload_to_testflight` and waits for processing. When the upload raises, it re-raises a " \
+          "processing timeout (`reraise_build_watcher`) or an outright App Store Connect rejection " \
+          "(`rejection_messages`), and otherwise polls App Store Connect for the build: if it's there, the upload " \
           "succeeded and the error was a false positive."
       end
 
       def self.available_options
         [
           FastlaneCore::ConfigItem.new(key: :api_key,
-                                       description: "The App Store Connect API key, as app_store_connect_api_key " \
+                                       description: "The App Store Connect API key, as `app_store_connect_api_key` " \
                                                     "returns it",
                                        type: Hash,
                                        sensitive: true),
@@ -70,12 +70,12 @@ module Fastlane
                                        optional: true,
                                        skip_type_validation: true),
           FastlaneCore::ConfigItem.new(key: :version,
-                                       description: "The IPA's version, to look for with verify_by_version",
+                                       description: "The IPA's version, to look for with `verify_by_version`",
                                        type: String,
                                        optional: true),
           FastlaneCore::ConfigItem.new(key: :skip_submission,
-                                       description: "upload_to_testflight's skip_submission: upload and wait for " \
-                                                    "processing, but skip distributing the build",
+                                       description: "`upload_to_testflight`'s `skip_submission`: upload and wait " \
+                                                    "for processing, but skip distributing the build",
                                        type: Fastlane::Boolean,
                                        default_value: false),
           FastlaneCore::ConfigItem.new(key: :wait_processing_timeout_duration,
