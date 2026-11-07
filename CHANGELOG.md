@@ -10,7 +10,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changed
 
-- `bosun_submit_app_store` without `submit_for_review` skips staging with a warning, instead of failing, while another version is with App Review or awaiting release.
+- `bosun_submit_app_store` skips staging, instead of failing, while another version is with App Review or awaiting release.
 
 ## [1.1.1](https://github.com/alexdlaird/fastlane-plugin-bosun/compare/1.1.0...1.1.1) - 2026-11-06
 
@@ -22,7 +22,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
-- `replace_waiting_for_review` on `bosun_submit_app_store`, to cancel and replace a submission still waiting for review when submitting, losing its place in the queue. A submission Apple is reviewing is never touched.
+- `replace_waiting_for_review` on `bosun_submit_app_store`, to replace a submission still waiting for review.
 
 ## [1.0.0](https://github.com/alexdlaird/fastlane-plugin-bosun/releases/tag/1.0.0) - 2026-11-05
 
