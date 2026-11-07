@@ -40,6 +40,15 @@ module Fastlane
             "Store Connect."
           )
         end
+        unless submit_for_review
+          in_flight = Helper::BosunHelper.versions_in_flight(spaceship_app)
+          unless in_flight.empty?
+            UI.important("App Store version #{Helper::BosunHelper.describe_versions(in_flight)} is still with App " \
+                         "Review or awaiting release, so #{version} wasn't staged (staging would rename it). Stage " \
+                         "#{version} once that version is released.")
+            return
+          end
+        end
         waiting = Helper::BosunHelper.refuse_while_another_version_in_flight(spaceship_app, version,
                                                                              replaceable_states: replaceable_states)
         Helper::BosunHelper.withdraw_waiting_for_review(spaceship_app, waiting) unless waiting.empty?

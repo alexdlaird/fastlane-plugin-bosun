@@ -76,8 +76,8 @@ class TestSubmitAppStore < BosunTestCase
                                                app_version_state: "WAITING_FOR_REVIEW"))
 
     # WHEN / THEN
-    assert_user_error(/3\.14\.6 \(`WAITING_FOR_REVIEW`\)/) { submit(automatic_release: true) }
-    assert_empty(uploads, "staging now would rename the in-flight version")
+    assert_user_error(/3\.14\.6 \(`WAITING_FOR_REVIEW`\)/) { submit(submit_for_review: true, automatic_release: true) }
+    assert_empty(uploads, "submitting now would rename the in-flight version")
   end
 
   def test_each_in_flight_state_is_refused
@@ -88,7 +88,27 @@ class TestSubmitAppStore < BosunTestCase
       given_app_store_versions(version("3.14.6", app_version_state: state))
 
       # WHEN / THEN
-      assert_user_error(/3\.14\.6/) { submit(automatic_release: true) }
+      assert_user_error(/3\.14\.6/) { submit(submit_for_review: true, automatic_release: true) }
+      teardown
+    end
+  end
+
+  def test_staging_skips_with_a_warning_while_another_version_is_in_flight
+    %w[READY_FOR_REVIEW WAITING_FOR_REVIEW IN_REVIEW WAITING_FOR_EXPORT_COMPLIANCE ACCEPTED PENDING_APPLE_RELEASE
+       PENDING_DEVELOPER_RELEASE PROCESSING_FOR_DISTRIBUTION].each do |state|
+      # GIVEN
+      setup
+      given_app_store_versions(version("3.14.6", app_version_state: state))
+
+      # WHEN
+      submit(submit_for_review: false, automatic_release: true)
+
+      # THEN
+      assert_empty(uploads, "staging would rename the in-flight version")
+      assert_empty(calls(:spaceship, :select_build), state)
+      warnings = calls(:ui, :important).map(&:last)
+      assert(warnings.any? { |text| text.include?("3.14.6 (`#{state}`)") && text.include?("3.15.1 wasn't staged") },
+             "warns which version is in flight: #{warnings}")
       teardown
     end
   end
@@ -266,11 +286,12 @@ class TestSubmitAppStore < BosunTestCase
     given_app_store_versions(waiting_for_review("3.14.6"))
     given_review_submission("WAITING_FOR_REVIEW")
 
-    # WHEN / THEN
-    assert_user_error(/3\.14\.6 \(`WAITING_FOR_REVIEW`\)/) do
-      submit(submit_for_review: false, replace_waiting_for_review: true, automatic_release: true)
-    end
+    # WHEN
+    submit(submit_for_review: false, replace_waiting_for_review: true, automatic_release: true)
+
+    # THEN
     assert_empty(calls(:spaceship, :cancel_submission))
+    assert_empty(uploads)
   end
 
   def test_replacing_with_nothing_waiting_cancels_nothing

@@ -69,8 +69,9 @@ end
 ```
 
 Without `submit_for_review`, the version is staged with the build attached, ready to submit from App Store Connect.
-Either way, a version already submitted, in review or live is refused, and so is any change while another version is
-with App Review or awaiting release: App Store Connect holds one version in flight, and staging then would rename it.
+Either way, a version already submitted, in review or live is refused. While another version is with App Review or
+awaiting release, App Store Connect holds it as the one version in flight, and staging would rename it: submitting is
+refused, and staging is skipped with a warning.
 When submitting with `replace_waiting_for_review`, a submission still waiting for review is cancelled and replaced
 instead, losing its place in the queue; one Apple is reviewing is never touched.
 

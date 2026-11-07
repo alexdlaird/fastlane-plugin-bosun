@@ -6,6 +6,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased](https://github.com/alexdlaird/fastlane-plugin-bosun/compare/1.1.1...HEAD)
 
+### Changed
+
+- `bosun_submit_app_store` without `submit_for_review` skips staging with a warning, instead of failing, while another version is with App Review or awaiting release.
+
 ## [1.1.1](https://github.com/alexdlaird/fastlane-plugin-bosun/compare/1.1.0...1.1.1) - 2026-11-06
 
 ### Fixed

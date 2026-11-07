@@ -42,10 +42,9 @@ module Fastlane
         false
       end
 
-      # Refuse while any version is with App Review or awaiting release, except in replaceable_states; return the
-      # versions it let through, for the caller to withdraw.
-      def refuse_while_another_version_in_flight(spaceship_app, version, replaceable_states: [])
-        in_flight = spaceship_app.get_app_store_versions(
+      # Versions with App Review or awaiting release.
+      def versions_in_flight(spaceship_app)
+        spaceship_app.get_app_store_versions(
           filter: {
             appVersionState: %w[
               READY_FOR_REVIEW
@@ -60,18 +59,28 @@ module Fastlane
             platform: "IOS"
           }
         )
+      end
+
+      def describe_versions(app_store_versions)
+        app_store_versions.map do |app_store_version|
+          "#{app_store_version.version_string} (`#{app_store_version.app_version_state}`)"
+        end.join(", ")
+      end
+
+      # Refuse while any version is with App Review or awaiting release, except in replaceable_states; return the
+      # versions it let through, for the caller to withdraw.
+      def refuse_while_another_version_in_flight(spaceship_app, version, replaceable_states: [])
+        in_flight = versions_in_flight(spaceship_app)
         blocking = in_flight.reject do |app_store_version|
           replaceable_states.include?(app_store_version.app_version_state)
         end
         return in_flight if blocking.empty?
 
-        pending = blocking.map do |app_store_version|
-          "#{app_store_version.version_string} (`#{app_store_version.app_version_state}`)"
-        end.join(", ")
         UI.user_error!(
-          "App Store version #{pending} is still with App Review or awaiting release, so #{version} can't be " \
-          "staged. App Store Connect holds one version in flight, and staging now would rename that version to " \
-          "#{version} and change its listing. Let it finish (or cancel it in App Store Connect), then re-run."
+          "App Store version #{describe_versions(blocking)} is still with App Review or awaiting release, so " \
+          "#{version} can't be staged. App Store Connect holds one version in flight, and staging now would rename " \
+          "that version to #{version} and change its listing. Let it finish (or cancel it in App Store Connect), " \
+          "then re-run."
         )
       end
 
