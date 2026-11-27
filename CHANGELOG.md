@@ -4,7 +4,9 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/alexdlaird/fastlane-plugin-bosun/compare/1.1.2...HEAD)
+## [Unreleased](https://github.com/alexdlaird/fastlane-plugin-bosun/compare/1.1.3...HEAD)
+
+## [1.1.3](https://github.com/alexdlaird/fastlane-plugin-bosun/compare/1.1.2...1.1.3) - 2026-11-27
 
 ### Changed
 
