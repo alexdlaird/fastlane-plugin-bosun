@@ -14,12 +14,14 @@ module Fastlane
         submit_for_review = params[:submit_for_review]
         push_store_assets = params[:push_store_assets]
 
-        # Play wants changelogs/<versionCode>.txt for every release: stamped from the one template.
+        # Play wants changelogs/<versionCode>.txt for every release: stamped from each language's one template.
         template = File.join(metadata_dir, "en-US/default_release_notes.txt")
-        changelog_dir = File.join(metadata_dir, "en-US/changelogs")
         UI.user_error!("Missing #{template}") unless File.exist?(template)
-        FileUtils.mkdir_p(changelog_dir)
-        FileUtils.cp(template, File.join(changelog_dir, "#{version_code}.txt"))
+        Dir[File.join(metadata_dir, "*", "default_release_notes.txt")].each do |language_template|
+          changelog_dir = File.join(File.dirname(language_template), "changelogs")
+          FileUtils.mkdir_p(changelog_dir)
+          FileUtils.cp(language_template, File.join(changelog_dir, "#{version_code}.txt"))
+        end
 
         if submit_for_review && !params[:replace_in_review]
           Helper::BosunHelper.refuse_while_production_release_in_flight(version)
@@ -55,11 +57,11 @@ module Fastlane
       end
 
       def self.details
-        "Stamps `changelogs/<version_code>.txt` from `en-US/default_release_notes.txt`, puts the version code " \
-          "back on the Internal track if a newer build replaced it there, and promotes it to Production with the " \
-          "listing text (and images and screenshots with `push_store_assets`). Submitting refuses while a " \
-          "Production release is in review or approved but unpublished, unless `replace_in_review`: committing " \
-          "then makes Play cancel that review and review the new release instead."
+        "Stamps `changelogs/<version_code>.txt` from each language's `default_release_notes.txt` (`en-US` " \
+          "required), puts the version code back on the Internal track if a newer build replaced it there, and " \
+          "promotes it to Production with the listing text (and images and screenshots with `push_store_assets`). " \
+          "Submitting refuses while a Production release is in review or approved but unpublished, unless " \
+          "`replace_in_review`: committing then makes Play cancel that review and review the new release instead."
       end
 
       def self.available_options

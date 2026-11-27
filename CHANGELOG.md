@@ -6,6 +6,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased](https://github.com/alexdlaird/fastlane-plugin-bosun/compare/1.1.2...HEAD)
 
+### Changed
+
+- `bosun_submit_play_production` stamps the changelog for every language with a `default_release_notes.txt`, not only `en-US`.
+
 ## [1.1.2](https://github.com/alexdlaird/fastlane-plugin-bosun/compare/1.1.1...1.1.2) - 2026-11-07
 
 ### Changed

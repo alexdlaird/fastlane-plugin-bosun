@@ -71,6 +71,21 @@ class TestPlay < BosunTestCase
     assert_empty(calls(:supply, :update_track), "the version code is already on Internal")
   end
 
+  def test_submitting_stamps_a_changelog_for_every_language
+    # GIVEN
+    given_release_notes_template
+    @world.write("android/fastlane/metadata/android/es-419/default_release_notes.txt", "Corrección de errores.\n")
+    given_action_returns(:google_play_track_version_codes, [500])
+
+    # WHEN
+    submit(submit_for_review: true)
+
+    # THEN
+    assert_equal("Bug fixes.\n", File.read(@world.path("android/fastlane/metadata/android/en-US/changelogs/500.txt")))
+    assert_equal("Corrección de errores.\n",
+                 File.read(@world.path("android/fastlane/metadata/android/es-419/changelogs/500.txt")))
+  end
+
   def test_staging_promotes_a_draft_without_checking_reviews
     # GIVEN
     given_release_notes_template
